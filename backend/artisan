@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+define('LARAVEL_START', microtime(true));
+
+if (file_exists($application = __DIR__.'/bootstrap/app.php')) {
+    require_once $application;
+}
+
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$app->make(Illuminate\Contracts\Console\Kernel::class)->handle(
+    (new Symfony\Component\Console\Input\ArgvInput()),
+    new Symfony\Component\Console\Output\ConsoleOutput()
+)->send();
+
+$app->terminate();

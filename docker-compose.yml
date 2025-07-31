@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Nginx 反向代理服務
+  nginx:
+    image: nginx:latest
+    container_name: petcare-system_nginx
+    ports:
+      - "8080:80" # 將主機的 8080 端口映射到容器的 80 端口
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro # 將前端構建的靜態文件掛載到 Nginx 服務
+    depends_on:
+      - backend
+      - frontend_build # 確保前端先構建完成
+    networks:
+      - app-network
+
+  # Laravel 後端服務
+  backend:
+    build:
+      context: ./backend # Laravel 應用的 Dockerfile 位置
+      dockerfile: Dockerfile
+    container_name: petcare-system_backend
+    volumes:
+      - ./backend:/var/www # 將本地後端程式碼掛載到容器中，方便開發
+      - /var/www/vendor # 避免 vendor 目錄被本地覆蓋，依賴容器內部安裝
+    environment:
+      # Laravel 環境變數，這些會覆蓋 .env 檔案中的值
+      APP_ENV: production # 在生產環境中可以改為 production
+      APP_DEBUG: "true" # 開發時為 true，生產時為 false
+      APP_KEY: # 留空，Laravel 啟動時會檢查生成，或手動設定
+      DB_CONNECTION: mysql
+      DB_HOST: your_external_mysql_host # !!! 替換為你的外部 MySQL IP 或域名 !!!
+      DB_PORT: 3306
+      DB_DATABASE: pet_health_manager
+      DB_USERNAME: your_mysql_username # !!! 替換為你的外部 MySQL 用戶名 !!!
+      DB_PASSWORD: your_mysql_password # !!! 替換為你的外部 MySQL 密碼 !!!
+      SANCTUM_STATEFUL_DOMAINS: localhost:8080,127.0.0.1:8080
+      SESSION_DOMAIN: localhost
+    # command: php artisan serve --host 0.0.0.0 --port 9000 # Dockerfile 中已經設定
+    networks:
+      - app-network
+
+  # Vue 前端構建服務（僅用於構建靜態文件，不常駐運行）
+  frontend_build:
+    build:
+      context: ./frontend # Vue 應用的 Dockerfile 位置
+      dockerfile: Dockerfile
+    container_name: petcare-system_frontend_builder
+    volumes:
+      - ./frontend:/app # 掛載前端程式碼
+      - /app/node_modules # 避免 node_modules 被本地覆蓋
+      - ./frontend/dist:/app/dist # 將構建結果輸出到主機，供 Nginx 掛載
+    command: npm run build # 運行構建命令
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

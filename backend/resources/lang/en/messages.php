@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'welcome' => 'Welcome to PetCare System!',
+    'login_success' => 'Login successful',
+    'registration_success' => 'Registration successful',
+    'logout_success' => 'Logged out successfully',
+    'invalid_credentials' => 'Invalid credentials.',
+    'pet_added' => 'Pet added successfully!',
+    'pet_updated' => 'Pet updated successfully!',
+    'pet_deleted' => 'Pet deleted successfully!',
+    'default_pet_set' => 'Default pet set successfully!',
+    'health_record_added' => 'Health record added successfully!',
+    'health_record_updated' => 'Health record updated successfully!',
+    'health_record_deleted' => 'Health record deleted successfully!',
+    'behavior_log_added' => 'Behavior log added successfully!',
+    'behavior_log_updated' => 'Behavior log updated successfully!',
+    'behavior_log_deleted' => 'Behavior log deleted successfully!',
+    'cannot_load_user_data' => 'Cannot load user data.',
+    'cannot_load_health_records' => 'Cannot load health records.',
+    'cannot_load_behavior_logs' => 'Cannot load behavior logs.',
+    'add_pet_failed' => 'Failed to add pet.',
+    'add_record_failed' => 'Failed to add health record.',
+    'add_behavior_log_failed' => 'Failed to add behavior log.',
+    'select_pet_first' => 'Please select a pet first.',
+];
