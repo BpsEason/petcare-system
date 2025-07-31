@@ -298,6 +298,41 @@ export const usePetStore = defineStore('pet', {
   },
 });
 ```
+以下是針對寵物健康管理系統（PetCare System）的常見技術問題與解答，供技術人員參考。系統基於 Laravel 11（後端）、Vue 3 搭配 Pinia（前端），並使用 Docker 部署，支援多語系和 PWA 功能。
+
+## 1. 系統如何實現用戶認證？
+**解答**：系統使用 Laravel Sanctum 提供無狀態 API 認證。用戶通過 `/api/register` 和 `/api/login` 獲取個人存取令牌，儲存在前端 Pinia 的 `auth.js` 中。每次 API 請求攜帶 `Authorization: Bearer` 標頭，後端通過 `auth:sanctum` 中間件驗證身份。前端 `axios` 攔截器自動添加令牌並處理 401 錯誤，登出後清除令牌。
+
+## 2. 如何管理多隻寵物？
+**解答**：後端 `Pet` 模型與 `User` 模型建立一對多關聯（`user_id` 外鍵）。用戶可通過 `/api/pets` 端點新增、查看、更新和刪除寵物。`is_default` 欄位標記預設寵物，前端 Pinia 的 `pet.js` 儲存 `selectedPetId`，允許一鍵切換寵物並載入相關健康記錄和行為日誌。
+
+## 3. 健康記錄和行為日誌如何與寵物關聯？
+**解答**：`HealthRecord` 和 `BehaviorLog` 模型通過 `pet_id` 外鍵與 `Pet` 模型關聯（一對多）。後端控制器（`HealthRecordController` 和 `BehaviorLogController`）提供 RESTful 端點（`/api/pets/{pet}/health-records` 和 `/api/pets/{pet}/behavior-logs`），支援 CRUD 操作。前端 `DashboardView.vue` 通過 Pinia 動態載入選定寵物的記錄。
+
+## 4. 如何實現多語系支援？
+**解答**：後端使用 Laravel 的語系檔案（`resources/lang/{en,zh_TW,zh_CN}/messages.php`），通過 `SetLocale` 中間件根據 `Accept-Language` 標頭動態設定語系。前端使用 Vue I18n（`src/locales/{en,zh_TW,zh_CN}.json`），提供下拉選單切換語系，儲存用戶選擇於 `localStorage`，確保前後端語系一致。
+
+## 5. PWA 功能是如何實現的？
+**解答**：前端使用 Vite PWA 外掛（`vite-plugin-pwa`），配置於 `vite.config.js`，生成 `manifest.json` 和 Service Worker（`src/main.js`）。Nginx 配置（`nginx.conf`）支援 Service Worker 緩存策略，實現離線訪問。需手動替換 `frontend/src/assets/icon-*.png` 以完善 PWA 圖標。
+
+## 6. Docker 部署的架構是什麼？
+**解答**：系統使用 Docker Compose 定義三個服務：
+- `nginx`：反向代理，處理前端靜態檔案和後端 API 請求。
+- `backend`：Laravel 應用，運行 PHP-FPM，連接到外部 MySQL。
+- `frontend_build`：Vue 構建服務，生成靜態檔案並傳遞給 Nginx。
+所有服務通過 `app-network` 網路通信，確保環境一致性。
+
+## 7. 如何確保資料安全？
+**解答**：後端使用 Laravel Sanctum 驗證 API 請求，`PetPolicy`、`HealthRecordPolicy` 和 `BehaviorLogPolicy` 限制只有寵物擁有者能訪問數據。前端 `axios` 攔截器處理 CSRF 令牌並檢測 401 錯誤，自動登出無效會話。資料庫遷移使用外鍵約束（`onDelete('cascade')`）確保數據一致性。
+
+## 8. 系統如何處理前端狀態管理？
+**解答**：前端使用 Pinia（`src/stores/auth.js` 和 `pet.js`）管理認證和寵物狀態。`auth.js` 儲存用戶令牌和資訊，`pet.js` 管理寵物列表、選定寵物、健康記錄和行為日誌。狀態通過 `axios` 與後端 API 同步，支援非同步數據載入。
+
+## 9. 如何擴展新功能（如飲食追蹤）？
+**解答**：後端可新增模型（如 `FoodLog`）和控制器，定義新表結構並通過遷移檔案（`database/migrations`）創建。API 端點可擴展至 `routes/api.php`，前端新增對應組件和 Pinia 狀態。模組化設計（RESTful API 和 Pinia）確保擴展不影響現有功能。
+
+## 10. 如何處理性能問題？
+**解答**：當前系統未配置快取或佇列，建議引入 Redis（快取寵物和記錄數據）並使用 Laravel Queue 處理異步任務（如通知）。後端控制器可使用 `Cache::remember` 快取查詢結果，前端可通過 `keep-alive` 組件減少重複渲染。
 
 ## 注意事項
 
